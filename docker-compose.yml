@@ -1,0 +1,65 @@
+version: '3.3'
+services:
+  php:
+    build: docker/php
+    container_name: php-fpm-navistudio
+    volumes:
+      - .:/var/www
+    env_file:
+      - docker.env
+    depends_on:
+      - db
+      #- laravel_db
+  nginx:
+    image: nginx:1.17
+    container_name: nginx-navistudio
+    ports:
+      - 8082:80
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/navistudio.local.conf:/etc/nginx/conf.d/navistudio.local.conf
+      - ./docker/nginx/app.navistudio.local.conf:/etc/nginx/conf.d/app.navistudio.local.conf
+      - ./docker/nginx/logs:/var/log/nginx
+    depends_on:
+      - php
+    env_file:
+      - docker.env
+  db:
+    image: mysql
+    ports:
+      - 3306:3306
+    container_name: mysql-navistudio
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_DATABASE: navistudio
+      MYSQL_USER: app_admin
+      MYSQL_PASSWORD: 123
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+  #laravel_db:
+    #image: mysql
+    #ports:
+    #  - 3308:3306
+   # container_name: laradb
+   # command: --default-authentication-plugin=mysql_native_password
+   # restart: always
+   # environment:
+   #   MYSQL_DATABASE: mainacad_laravel
+   #   MYSQL_USER: laravel_admin
+   #   MYSQL_PASSWORD: 123
+  #    MYSQL_ALLOW_EMPTY_PASSWORD: 1
+  phpmyadmin:
+    restart: always
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-navistudio
+    hostname: navistudio.pma
+    domainname: navistudio.pma.local
+    ports:
+      - 8000:80
+    environment:
+      - PMA_USER=root
+      - PMA_PASSWORD=
+      - PMA_ABSOLUTE_URI=http://navistudio.pma.local/
+      - MYSQL_ROOT_PASSWORD=
+    depends_on:
+      - db
